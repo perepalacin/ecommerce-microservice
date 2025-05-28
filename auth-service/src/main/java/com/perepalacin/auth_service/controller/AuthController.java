@@ -1,56 +1,60 @@
 package com.perepalacin.auth_service.controller;
 
+import com.perepalacin.auth_service.client.OAuthClient;
+import com.perepalacin.auth_service.response.KeycloakTokenResponse;
 import com.perepalacin.auth_service.entity.dto.UserDto;
 import com.perepalacin.auth_service.service.KeycloakService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.perepalacin.auth_service.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private KeycloakService keycloakService;
+    private final KeycloakService keycloakService;
+    private final OAuthClient oAuthClient;
 
-
-    @GetMapping("/search")
-    public ResponseEntity<?> findAllUsers(){
-        return ResponseEntity.ok(keycloakService.findAllUsers());
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("pong!");
     }
 
-
-    @GetMapping("/search/{username}")
-    public ResponseEntity<?> searchUserByUsername(@PathVariable String username){
-        return ResponseEntity.ok(keycloakService.searchUserByUsername(username));
+    @PostMapping("/sign-in")
+    public ResponseEntity<KeycloakTokenResponse> loginUser(@Valid @RequestBody UserDto userDto) {
+        KeycloakTokenResponse token = oAuthClient.authenticateUser(userDto);
+        return ResponseEntity.status(HttpStatus.OK).body(token);
     }
 
+    @PostMapping("/refresh-token/{refreshToken}")
+    public ResponseEntity<KeycloakTokenResponse> getNewAccessToken(@PathVariable(name="refreshToken") String refreshToken) {
+        KeycloakTokenResponse token = oAuthClient.refreshAccessToken(refreshToken);
+        return ResponseEntity.status(HttpStatus.OK).body(token);
+    }
 
-    @PostMapping("/create")
-    public ResponseEntity<?> createUser(@RequestBody UserDto userDTO) throws URISyntaxException {
-        String response = keycloakService.createUser(userDTO);
-        return ResponseEntity.created(new URI("/keycloak/user/create")).body(response);
+    @PostMapping("/sign-up")
+    public ResponseEntity<String> registerUser(@Valid @RequestBody UserDto userDTO) throws URISyntaxException {
+        ResponseEntity<String> response = keycloakService.createUser(userDTO);
+        return response;
     }
 
 
     @PutMapping("/update/{userId}")
-    public ResponseEntity<?> updateUser(@PathVariable String userId, @RequestBody UserDto userDTO){
-        keycloakService.updateUser(userId, userDTO);
-        return ResponseEntity.ok("User updated successfully");
+    public ResponseEntity<String> updateUser(@PathVariable String userId, @RequestBody UserDto userDTO){
+        return keycloakService.updateUser(userId, userDTO);
     }
 
 
     @DeleteMapping("/delete/{userId}")
-    public ResponseEntity<?> deleteUser(@PathVariable String userId){
-        keycloakService.deleteUser(userId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/ping")
-    public String pingAuthService() {
-        return "Pong from the auth service";
+    public ResponseEntity<String> deleteUser(@PathVariable String userId){
+        return keycloakService.deleteUser(userId);
     }
 }

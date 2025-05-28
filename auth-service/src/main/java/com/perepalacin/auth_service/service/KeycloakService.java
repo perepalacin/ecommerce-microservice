@@ -2,8 +2,11 @@ package com.perepalacin.auth_service.service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
+import com.perepalacin.auth_service.entity.dao.UserDao;
 import jakarta.ws.rs.core.Response;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.keycloak.OAuth2Constants;
@@ -13,15 +16,21 @@ import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import com.perepalacin.auth_service.entity.dto.UserDto;
 import com.perepalacin.auth_service.util.KeycloakProvider;
+import org.springframework.web.client.HttpClientErrorException;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class KeycloakService {
+
+    private final UserService userService;
 
     public List<UserRepresentation> findAllUsers(){
         return KeycloakProvider.getRealmResource()
@@ -37,7 +46,7 @@ public class KeycloakService {
     }
 
 
-    public String createUser(@NonNull UserDto userDTO) {
+    public ResponseEntity<String> createUser(@NonNull UserDto userDTO) {
 
         int status = 0;
         UsersResource usersResource = KeycloakProvider.getUserResource();
@@ -47,7 +56,7 @@ public class KeycloakService {
         userRepresentation.setLastName(userDTO.getLastName());
         userRepresentation.setEmail(userDTO.getEmail());
         userRepresentation.setEnabled(true);
-        userRepresentation.setEmailVerified(true);
+        userRepresentation.setEmailVerified(false);
 
         Response response = usersResource.create(userRepresentation);
 
@@ -66,42 +75,45 @@ public class KeycloakService {
 
             RealmResource realmResource = KeycloakProvider.getRealmResource();
 
-            List<RoleRepresentation> rolesRepresentation = null;
+            List<RoleRepresentation> rolesRepresentation = List.of(realmResource.roles().get("user").toRepresentation());
 
-            if (userDTO.getRoles() == null || userDTO.getRoles().isEmpty()) {
-                rolesRepresentation = List.of(realmResource.roles().get("user").toRepresentation());
-            } else {
-                rolesRepresentation = realmResource.roles()
-                        .list()
-                        .stream()
-                        .filter(role -> userDTO.getRoles()
-                                .stream()
-                                .anyMatch(roleName -> roleName.equalsIgnoreCase(role.getName())))
-                        .toList();
-            }
-
-            realmResource.users().get(userId).roles().realmLevel().add(rolesRepresentation);
-
-            return "User created successfully!!";
-
+            userService.createUser(UserDao.builder()
+                            .id(UUID.fromString(userId))
+                            .email(userDTO.getEmail())
+                            .firstName(userDTO.getFirstName())
+                            .lastName(userDTO.getLastName())
+                            .build());
+            return ResponseEntity.ok("User created successfully!!");
         } else if (status == 409) {
             log.error("User exist already!");
-            return "User exist already!";
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("User exist already!");
         } else {
             log.error("Error creating user, please contact with the administrator.");
-            return "Error creating user, please contact with the administrator.";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user, please contact with the administrator.");
         }
     }
 
 
-    public void deleteUser(String userId){
+    public ResponseEntity<String> deleteUser(String userId){
+        Boolean isValidUpdate = userService.deleteUser(UUID.fromString(userId));
+        if (!isValidUpdate) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You don't have the permissions to perform this operation");
+        }
         KeycloakProvider.getUserResource()
                 .get(userId)
                 .remove();
+        return ResponseEntity.status(HttpStatus.OK).body("User deleted successfully!");
+
     }
 
 
-    public void updateUser(String userId, @NonNull UserDto userDTO){
+    public ResponseEntity<String> updateUser(String userId, @NonNull UserDto userDTO){
+
+        Boolean isValidUpdate = userService.updateUser(UUID.fromString(userId), userDTO);
+
+        if (!isValidUpdate) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You don't have the permissions to perform this operation");
+        }
 
         CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
         credentialRepresentation.setTemporary(false);
@@ -118,5 +130,6 @@ public class KeycloakService {
 
         UserResource usersResource = KeycloakProvider.getUserResource().get(userId);
         usersResource.update(user);
+        return ResponseEntity.status(HttpStatus.OK).body("User updated successfully!");
     }
 }
