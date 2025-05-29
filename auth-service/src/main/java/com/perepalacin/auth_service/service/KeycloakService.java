@@ -30,6 +30,8 @@ import org.springframework.web.client.HttpClientErrorException;
 @RequiredArgsConstructor
 public class KeycloakService {
 
+    //TODO: Create controller to get all user directions, edit direction and delete direction.
+
     private final UserService userService;
 
     public List<UserRepresentation> findAllUsers(){
@@ -72,10 +74,6 @@ public class KeycloakService {
             credentialRepresentation.setValue(userDTO.getPassword());
 
             usersResource.get(userId).resetPassword(credentialRepresentation);
-
-            RealmResource realmResource = KeycloakProvider.getRealmResource();
-
-            List<RoleRepresentation> rolesRepresentation = List.of(realmResource.roles().get("user").toRepresentation());
 
             userService.createUser(UserDao.builder()
                             .id(UUID.fromString(userId))
