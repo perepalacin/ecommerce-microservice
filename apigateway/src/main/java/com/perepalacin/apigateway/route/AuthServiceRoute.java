@@ -16,11 +16,12 @@ public class AuthServiceRoute {
 
     @Bean
     public RouterFunction<ServerResponse> authServiceRoutes() {
-        return GatewayRouterFunctions.route("auth-service")
-                .route(RequestPredicates.path("/api/v1/auth/**"),
-                        HandlerFunctions.http("http://localhost:8082"))
-                .filter(CircuitBreakerFilterFunctions.circuitBreaker("authServiceCircuitBreaker",
-                        URI.create("forward:/authFallback")))
-                .build();
+            return GatewayRouterFunctions.route("auth-service")
+                    .route(RequestPredicates.path("/api/v1/auth/**"),
+                            HandlerFunctions.http("http://localhost:8082"))
+                    .filter(CircuitBreakerFilterFunctions.circuitBreaker("authServiceCircuitBreaker",
+                            URI.create("forward:/authFallback")))
+                    .build();
     }
 }
+

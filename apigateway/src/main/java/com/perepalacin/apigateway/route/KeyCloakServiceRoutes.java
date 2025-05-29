@@ -8,13 +8,13 @@ import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 
-@Configuration
-public class KeyCloakServiceRoutes {
-    @Bean
-    public RouterFunction<ServerResponse> keycloakRoutes() {
-        return GatewayRouterFunctions.route("keycloak-service")
-                .route(RequestPredicates.POST("/realms/ecommerce-security-realm/protocol/openid-connect/token"),
-                        HandlerFunctions.http("http://localhost:8091/realms/ecommerce-security-realm/protocol/openid-connect/token"))
-                .build();
-    }
-}
+//@Configuration
+//public class KeyCloakServiceRoutes {
+//    @Bean
+//    public RouterFunction<ServerResponse> keycloakRoutes() {
+//        return GatewayRouterFunctions.route("keycloak-service")
+//                .route(RequestPredicates.POST("/realms/ecommerce-security-realm/protocol/openid-connect/token"),
+//                        HandlerFunctions.http("http://localhost:8091/realms/ecommerce-security-realm/protocol/openid-connect/token"))
+//                .build();
+//    }
+//}

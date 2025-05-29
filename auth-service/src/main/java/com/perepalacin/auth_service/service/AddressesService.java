@@ -85,6 +85,19 @@ public class AddressesService {
         return addressToEdit;
     }
 
+    @Transactional
+    public void editDefaultAddress (long addressId) {
+        UserDetailsDto userDetailsDto = JwtUtil.getCredentialsFromToken();
+        if (userDetailsDto == null) {
+            return;
+        }
+        AddressDao addressToEdit = addressesRepository.findByIdAndUserId(addressId, userDetailsDto.getUserId()).orElseThrow(
+                () -> new NotFoundException("Address with id: " + addressId + " does not exist")
+        );
+        modifyCurrentDefaultAddress(userDetailsDto.getUserId(), addressId);
+        addressToEdit.setDefaultAddress(true);
+    }
+
     public void deleteAddress (long addressId) {
         UserDetailsDto userDetailsDto = JwtUtil.getCredentialsFromToken();
         if (userDetailsDto == null) {

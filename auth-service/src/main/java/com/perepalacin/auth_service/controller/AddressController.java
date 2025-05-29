@@ -28,10 +28,15 @@ public class AddressController {
         return ResponseEntity.status(HttpStatus.CREATED).body(addressesService.addAddress(addressRequest));
     }
 
-
     @PatchMapping("/{addressId}")
     public ResponseEntity<AddressDao> editAddress (@PathVariable Long addressId, @RequestBody @Valid AddressRequest addressRequest) {
         return ResponseEntity.status(HttpStatus.OK).body(addressesService.editAddress(addressId, addressRequest));
+    }
+
+    @PatchMapping("/change-default/{addressId}")
+    public ResponseEntity<Void> editDefaultAddress (@PathVariable Long addressId) {
+        addressesService.editDefaultAddress(addressId);
+        return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
     @DeleteMapping("/{addressId}")
