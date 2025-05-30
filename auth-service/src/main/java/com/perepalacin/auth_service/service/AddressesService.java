@@ -27,7 +27,7 @@ public class AddressesService {
         if (userDetailsDto == null) {
             return null;
         }
-        return addressesRepository.findByUserId(userDetailsDto.getUserId());
+        return addressesRepository.findByUserId_Id(userDetailsDto.getUserId());
     }
 
     @Transactional
@@ -63,7 +63,7 @@ public class AddressesService {
         if (userDetailsDto == null) {
             return null;
         }
-        AddressDao addressToEdit = addressesRepository.findByIdAndUserId(addressId, userDetailsDto.getUserId()).orElseThrow(
+        AddressDao addressToEdit = addressesRepository.findByIdAndUserId_Id(addressId, userDetailsDto.getUserId()).orElseThrow(
                 () -> new NotFoundException("Address with id: " + addressId + " does not exist")
         );
         addressToEdit.setFullName(addressRequest.getFullName());
@@ -91,7 +91,7 @@ public class AddressesService {
         if (userDetailsDto == null) {
             return;
         }
-        AddressDao addressToEdit = addressesRepository.findByIdAndUserId(addressId, userDetailsDto.getUserId()).orElseThrow(
+        AddressDao addressToEdit = addressesRepository.findByIdAndUserId_Id(addressId, userDetailsDto.getUserId()).orElseThrow(
                 () -> new NotFoundException("Address with id: " + addressId + " does not exist")
         );
         modifyCurrentDefaultAddress(userDetailsDto.getUserId(), addressId);
@@ -103,7 +103,7 @@ public class AddressesService {
         if (userDetailsDto == null) {
             return;
         }
-        AddressDao addressToDelete = addressesRepository.findByIdAndUserId(addressId, userDetailsDto.getUserId()).orElseThrow(
+        AddressDao addressToDelete = addressesRepository.findByIdAndUserId_Id(addressId, userDetailsDto.getUserId()).orElseThrow(
                 () -> new NotFoundException("Address with id: " + addressId + " does not exist")
         );
 
@@ -111,7 +111,7 @@ public class AddressesService {
     }
 
     private void modifyCurrentDefaultAddress (UUID userId) {
-        Optional<AddressDao> currentDefaultAddressOptional = addressesRepository.findByUserIdAndDefaultAddressTrue(userId);
+        Optional<AddressDao> currentDefaultAddressOptional = addressesRepository.findByUserId_IdAndDefaultAddressTrue(userId);
         if (currentDefaultAddressOptional.isPresent()) {
             AddressDao currentDefaultAddress = currentDefaultAddressOptional.get();
             currentDefaultAddress.setDefaultAddress(false);
@@ -120,7 +120,7 @@ public class AddressesService {
     }
 
     private void modifyCurrentDefaultAddress (UUID userId, long addressId) {
-        Optional<AddressDao> currentDefaultAddressOptional = addressesRepository.findByUserIdAndDefaultAddressTrue(userId);
+        Optional<AddressDao> currentDefaultAddressOptional = addressesRepository.findByUserId_IdAndDefaultAddressTrue(userId);
         if (currentDefaultAddressOptional.isPresent()) {
             AddressDao currentDefaultAddress = currentDefaultAddressOptional.get();
             if (currentDefaultAddress.getId() == addressId) {

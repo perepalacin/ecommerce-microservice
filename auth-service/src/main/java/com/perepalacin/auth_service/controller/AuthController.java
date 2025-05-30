@@ -4,16 +4,14 @@ import com.perepalacin.auth_service.client.OAuthClient;
 import com.perepalacin.auth_service.response.KeycloakTokenResponse;
 import com.perepalacin.auth_service.entity.dto.UserDto;
 import com.perepalacin.auth_service.service.KeycloakService;
-import com.perepalacin.auth_service.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.UUID;
+
 
 @RestController
 @RequestMapping("/api/v1/auth")

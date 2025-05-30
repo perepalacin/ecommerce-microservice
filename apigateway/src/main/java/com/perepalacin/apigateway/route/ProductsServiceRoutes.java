@@ -16,7 +16,7 @@ public class ProductsServiceRoutes {
     @Bean
     public RouterFunction<ServerResponse> bookingRoutes() {
         return GatewayRouterFunctions.route("product-service")
-                .route(RequestPredicates.GET("/api/v1/products"),
+                .route(RequestPredicates.GET("/api/v1/products/**"),
                         HandlerFunctions.http("http://localhost:8080/api/v1/products"))
                 .build();
     }
