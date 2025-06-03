@@ -4,6 +4,7 @@ import com.perepalacin.auth_service.entity.dao.AddressDao;
 import com.perepalacin.auth_service.entity.dao.UserDao;
 import com.perepalacin.auth_service.entity.dto.UserDetailsDto;
 import com.perepalacin.auth_service.exceptions.NotFoundException;
+import com.perepalacin.auth_service.exceptions.UnauthorizedException;
 import com.perepalacin.auth_service.repository.AddressesRepository;
 import com.perepalacin.auth_service.request.AddressRequest;
 import com.perepalacin.auth_service.util.JwtUtil;
@@ -22,12 +23,40 @@ public class AddressesService {
 
     private final AddressesRepository addressesRepository;
 
+    public AddressDao getAddressesById (final long addressId) {
+        UserDetailsDto userDetailsDto = JwtUtil.getCredentialsFromToken();
+        if (userDetailsDto == null) {
+            return null;
+        }
+
+        return addressesRepository.findByIdAndUserId_Id(addressId, userDetailsDto.getUserId()).orElseThrow(
+                () -> new NotFoundException("The address with id: " + addressId + " doesn't exist")
+        );
+    }
+
     public List<AddressDao> getUserAddresses () {
         UserDetailsDto userDetailsDto = JwtUtil.getCredentialsFromToken();
         if (userDetailsDto == null) {
             return null;
         }
         return addressesRepository.findByUserId_Id(userDetailsDto.getUserId());
+    }
+
+    public List<AddressDao> getBatchOfAddresses (List<Long> addressesIds) {
+        UserDetailsDto userDetailsDto = JwtUtil.getCredentialsFromToken();
+        if (userDetailsDto == null) {
+            return null;
+        }
+
+        List<AddressDao> addresses = addressesRepository.findByIdIn(addressesIds);
+
+        for (AddressDao address : addresses) {
+            if (!address.getUserId().equals(userDetailsDto.getUserId())) {
+                throw new UnauthorizedException();
+            }
+        }
+
+        return addresses;
     }
 
     @Transactional

@@ -13,4 +13,5 @@ public interface AddressesRepository extends JpaRepository<AddressDao, Long> {
     List<AddressDao> findByUserId_Id(UUID userId);
     Optional<AddressDao> findByIdAndUserId_Id(long id, UUID userId);
     Optional<AddressDao> findByUserId_IdAndDefaultAddressTrue(UUID userId);
+    List<AddressDao> findByIdIn(List<Long> addressesIds);
 }

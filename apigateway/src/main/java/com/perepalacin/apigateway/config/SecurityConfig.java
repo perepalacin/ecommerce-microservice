@@ -27,7 +27,8 @@ public class SecurityConfig {
             "/index.html",
             "/assets/**",
             "/favicon.ico",
-            "/fallbackRoute"
+            "/fallbackRoute",
+            "/error"
     };
 
     @Bean

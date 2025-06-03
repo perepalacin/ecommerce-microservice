@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/addresses")
@@ -18,9 +19,19 @@ public class AddressController {
 
     private final AddressesService addressesService;
 
+    @GetMapping("/{addressId}")
+    public ResponseEntity<AddressDao> getAddressesById (@PathVariable Long addressId) {
+        return ResponseEntity.ok(addressesService.getAddressesById(addressId));
+    }
+
     @GetMapping
     public ResponseEntity<List<AddressDao>> getUserAddresses () {
         return ResponseEntity.ok(addressesService.getUserAddresses());
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<List<AddressDao>> getBatchAddresses (@RequestBody List<Long> addressesList) {
+        return ResponseEntity.ok(addressesService.getBatchOfAddresses(addressesList));
     }
 
     @PostMapping

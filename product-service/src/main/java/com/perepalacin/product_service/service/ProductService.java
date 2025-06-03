@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +25,8 @@ public class ProductService {
             Integer diameter,
             BigDecimal minPrice,
             BigDecimal maxPrice,
-            String keyword, // For searching by name/description
-            Pageable pageable) { // For pagination and sorting
+            String keyword,
+            Pageable pageable) {
 
         Specification<Product> spec = Specification.where(null);
 
@@ -48,15 +49,20 @@ public class ProductService {
         return productRepository.findAll(spec, pageable);
     }
 
-    public Product getProductById(Long id) {
+    public Product getProductById(final Long id) {
         return productRepository.findById(id).orElseThrow(() -> new NotFoundException("Product with id " + id + " not found"));
     }
 
-    public Product getProductByPublicUrl(String publicUrl) {
+    public Product getProductByPublicUrl(final String publicUrl) {
         return productRepository.findByPublicUrl(publicUrl).orElseThrow(() -> new NotFoundException("Product with public url: " + publicUrl + ", not found"));
+    }
+
+    public List<Product> findProductsByIds (final List<Long> productIds) {
+        return productRepository.findByIdIn(productIds);
     }
 
     public Product saveProduct(Product product) {
         return productRepository.save(product);
     }
+
 }
