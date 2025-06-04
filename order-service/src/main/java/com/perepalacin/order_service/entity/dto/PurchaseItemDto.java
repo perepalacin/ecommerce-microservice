@@ -22,10 +22,10 @@ public class PurchaseItemDto {
     public static PurchaseItemDto purchaseItemDaoToDtoMapper (PurchaseItem purchaseItem, CartItemDto cartItemDto) {
         return PurchaseItemDto.builder()
                 .id(purchaseItem.getId())
-                .productId(cartItemDto.getProductId())
-                .name(cartItemDto.getName())
-                .publicUrl(cartItemDto.getPublicUrl())
-                .imageUrl(cartItemDto.getImageUrl())
+                .productId(purchaseItem.getProductId())
+                .name(cartItemDto != null ? cartItemDto.getName() : null)
+                .publicUrl(cartItemDto != null ? cartItemDto.getPublicUrl() : null)
+                .imageUrl(cartItemDto != null ? cartItemDto.getImageUrl() : null)
                 .quantity(purchaseItem.getQuantity())
                 .purchase_price(purchaseItem.getPurchase_price())
                 .build();

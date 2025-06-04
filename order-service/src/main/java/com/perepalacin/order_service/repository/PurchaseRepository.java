@@ -9,6 +9,6 @@ import java.util.UUID;
 
 public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
-    List<Purchase> findByUserID(UUID userId);
+    List<Purchase> findByUserId(UUID userId);
 
 }

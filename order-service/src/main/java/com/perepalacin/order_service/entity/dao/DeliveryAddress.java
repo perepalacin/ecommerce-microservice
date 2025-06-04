@@ -41,4 +41,6 @@ public class DeliveryAddress implements AddressDetails {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "purchase_id", nullable = false)
     private Purchase purchase;
+    @Transient
+    private String vatId;
 }

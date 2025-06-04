@@ -1,11 +1,9 @@
 package com.perepalacin.order_service.service;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.perepalacin.order_service.client.AddressServiceClient;
 import com.perepalacin.order_service.client.CartServiceClient;
-import com.perepalacin.order_service.entity.dao.BillingAddress;
-import com.perepalacin.order_service.entity.dao.DeliveryAddress;
-import com.perepalacin.order_service.entity.dao.PurchaseItem;
+import com.perepalacin.order_service.client.ProductServiceClient;
+import com.perepalacin.order_service.entity.dao.*;
 import com.perepalacin.order_service.entity.dto.*;
 import com.perepalacin.order_service.exceptions.NotFoundException;
 import com.perepalacin.order_service.exceptions.OperationNotAllowedException;
@@ -16,13 +14,13 @@ import com.perepalacin.order_service.repository.PurchaseRepository;
 import com.perepalacin.order_service.request.PurchaseRequest;
 import com.perepalacin.order_service.util.JwtUtil;
 
-import jakarta.persistence.*;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +29,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 
-import com.perepalacin.order_service.entity.dao.Purchase;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -41,6 +38,7 @@ import org.springframework.web.client.ResourceAccessException;
 @RequiredArgsConstructor
 public class PurchaseService {
 
+    private final ProductServiceClient productServiceClient;
     private final CartServiceClient cartServiceClient;
     private final AddressServiceClient addressServiceClient;
     private final PurchaseRepository purchaseRepository;
@@ -66,7 +64,7 @@ public class PurchaseService {
                 .id(purchaseId)
                 .status(purchase.getStatus())
                 .totalPrice(purchase.getTotalPrice())
-                .purchaseItems(new ArrayList<>())
+                .purchaseItems(purchase.getItems().stream().map(PurchaseItemDto::purchaseItemDaoToDtoMapper).toList())
                 .billingAddress(AddressDto.addressDaoToDtoMapper(purchase.getBillingAddress(), true))
                 .deliveryAddress(AddressDto.addressDaoToDtoMapper(purchase.getDeliveryAddress(), false))
                 .orderDate(purchase.getOrderDate())
@@ -82,7 +80,7 @@ public class PurchaseService {
             throw new UnauthorizedException();
         }
 
-        List<Purchase> purchases = purchaseRepository.findByUserID(userDetails.getUserId());
+        List<Purchase> purchases = purchaseRepository.findByUserId(userDetails.getUserId());
         if (purchases.isEmpty()) {
             return null;
         } 
@@ -159,6 +157,13 @@ public class PurchaseService {
                     throw new NotFoundException("No valid delivery address was found with id: " + purchaseRequest.getDeliveryAddressId() + ", please try again later");
                 }
 
+                cartDto.getItems().forEach(item -> {
+                        if (item.getStock() <= 0) {
+                            throw new OperationNotAllowedException("Item " + item.getName() + " has no stock, please remove it from your cart to proceed.");
+                        }
+                    }
+                );
+
                 AddressDto billingAddressDto = billingAddressOptional.get();
                 BillingAddress billingAddress = BillingAddress.builder()
                         .fullName(billingAddressDto.getFullName())
@@ -207,6 +212,167 @@ public class PurchaseService {
         } catch (CompletionException e) {
             throw new RuntimeException("An unexpected error occurred during purchase creation.", e);
         }
+    }
+
+    public PurchaseDto editPurchaseAddress(final Long purchaseId, final Long addressId, final boolean isBillingAddress) {
+        UserDetailsDto userDetails = JwtUtil.getCredentialsFromToken();
+        if (userDetails.getUserId() == null) {
+            throw new UnauthorizedException();
+        }
+
+        Purchase purchaseToEdit = purchaseRepository.findById(purchaseId).orElseThrow(
+                () -> new NotFoundException("Purchase with id: " + purchaseId + " could not be found")
+        );
+
+        if (!purchaseToEdit.getUserId().equals(userDetails.getUserId())) {
+            throw new UnauthorizedException();
+        }
+
+        if (!isBillingAddress && LocalDateTime.now().isAfter(purchaseToEdit.getDeliveryDate())){
+            throw new OperationNotAllowedException("The purchase has already been delivered, the delivery date can't be modified.");
+        }
+
+        AddressDto fetchedAddress;
+        try {
+            ResponseEntity<AddressDto> addressResponse = addressServiceClient.getAddressById(addressId);
+            if (addressResponse.getStatusCode().is2xxSuccessful() && addressResponse.getBody() != null) {
+                fetchedAddress = addressResponse.getBody();
+            } else {
+                throw new NotFoundException("No valid address was found, please try again later");
+            }
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("No valid address was found, please try again later" + e);
+        } catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
+            throw new RuntimeException("Error fetching the user address. Server response was: " + e.getMessage(), e);
+        }
+
+        if (isBillingAddress) {
+            BillingAddress newBillingAddress = BillingAddress.builder()
+                    .id(fetchedAddress.getId())
+                    .fullName(fetchedAddress.getFullName())
+                    .telephoneNumber(fetchedAddress.getTelephoneNumber())
+                    .addressFirstLine(fetchedAddress.getAddressFirstLine())
+                    .addressSecondLine(fetchedAddress.getAddressSecondLine())
+                    .postalCode(fetchedAddress.getPostalCode())
+                    .city(fetchedAddress.getCity())
+                    .province(fetchedAddress.getProvince())
+                    .country(fetchedAddress.getCountry())
+                    .vatId(fetchedAddress.getVatId())
+                    .build();
+            purchaseToEdit.setBillingAddress(newBillingAddress);
+        } else {
+            DeliveryAddress newDeliveryAddress = DeliveryAddress.builder()
+                    .id(fetchedAddress.getId())
+                    .fullName(fetchedAddress.getFullName())
+                    .telephoneNumber(fetchedAddress.getTelephoneNumber())
+                    .addressFirstLine(fetchedAddress.getAddressFirstLine())
+                    .addressSecondLine(fetchedAddress.getAddressSecondLine())
+                    .postalCode(fetchedAddress.getPostalCode())
+                    .city(fetchedAddress.getCity())
+                    .province(fetchedAddress.getProvince())
+                    .country(fetchedAddress.getCountry())
+                    .build();
+            purchaseToEdit.setDeliveryAddress(newDeliveryAddress);
+        }
+
+        purchaseRepository.save(purchaseToEdit);
+
+        return PurchaseDto.purchaseDaoToDtoMapper(purchaseToEdit, purchaseToEdit.getItems().stream().map(PurchaseItemDto::purchaseItemDaoToDtoMapper).toList());
+    }
+
+    @Transactional
+    public PurchaseDto editPurchaseItemQuantity (final Long purchaseId, final Long itemId, final Integer newQuantity) {
+        UserDetailsDto userDetails = JwtUtil.getCredentialsFromToken();
+        if (userDetails.getUserId() == null) {
+            throw new UnauthorizedException();
+        }
+
+        Purchase purchaseToEdit = purchaseRepository.findById(purchaseId).orElseThrow(
+                () -> new NotFoundException("Purchase with id: " + purchaseId + " could not be found")
+        );
+
+        if (!purchaseToEdit.getUserId().equals(userDetails.getUserId())) {
+            throw new UnauthorizedException();
+        }
+
+        if (LocalDateTime.now().isAfter(purchaseToEdit.getDeliveryDate())){
+            throw new OperationNotAllowedException("The purchase has already been delivered, you can no longer edit it.");
+        }
+
+        for (int i = 0; i < purchaseToEdit.getItems().size(); i++) {
+            if (purchaseToEdit.getItems().get(i).getId().equals(itemId)) {
+                if (purchaseToEdit.getItems().get(i).getQuantity() > newQuantity) {
+                    int oldQuantity = purchaseToEdit.getItems().get(i).getQuantity();
+                    purchaseToEdit.getItems().get(i).setQuantity(newQuantity);
+                    BigDecimal newPrice = purchaseToEdit.getTotalPrice().subtract(purchaseToEdit.getItems().get(i).getPurchase_price().multiply(new BigDecimal(oldQuantity))).add(purchaseToEdit.getItems().get(i).getPurchase_price().multiply(new BigDecimal(newQuantity)));
+                    purchaseToEdit.setTotalPrice(newPrice);
+                    purchaseRepository.save(purchaseToEdit);
+                    break;
+                } else if (purchaseToEdit.getItems().get(i).getQuantity() < newQuantity) {
+                    int oldQuantity = purchaseToEdit.getItems().get(i).getQuantity();
+                    ProductDto productDto;
+                    try {
+                        ResponseEntity<ProductDto> productResponse = productServiceClient.getProductById(purchaseToEdit.getItems().get(i).getProductId());
+                        if (productResponse.getStatusCode().is2xxSuccessful() || productResponse.getBody() == null) {
+                            productDto = productResponse.getBody();
+                        } else {
+                            throw new NotFoundException("The product you want to modify no longer exists, please contact us directly to fix it.");
+                        }
+                    } catch (HttpClientErrorException.NotFound e) {
+                        throw new NotFoundException("The product you want to modify no longer exists, please contact us directly to fix it." + e);
+                    } catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
+                        throw new RuntimeException("Error fetching the product to edit. Server response was: " + e.getMessage(), e);
+                    }
+                    if (productDto.getPrice().equals(purchaseToEdit.getItems().get(i).getPurchase_price())) {
+                        purchaseToEdit.getItems().get(i).setQuantity(newQuantity);
+                        BigDecimal newPrice = purchaseToEdit.getTotalPrice().subtract(purchaseToEdit.getItems().get(i).getPurchase_price().multiply(new BigDecimal(oldQuantity))).add(purchaseToEdit.getItems().get(i).getPurchase_price().multiply(new BigDecimal(newQuantity)));
+                        purchaseToEdit.setTotalPrice(newPrice);
+                    } else {
+                        purchaseToEdit.getItems().get(i).setQuantity(newQuantity);
+                        purchaseToEdit.getItems().get(i).setPurchase_price(
+                                purchaseToEdit.getItems().get(i).getPurchase_price().multiply(new BigDecimal(purchaseToEdit.getItems().get(i).getQuantity()))
+                                        .add(productDto.getPrice().multiply(new BigDecimal(newQuantity - oldQuantity)))
+                                        .divide(new BigDecimal(newQuantity), RoundingMode.HALF_EVEN));
+                        BigDecimal newPrice = purchaseToEdit.getTotalPrice().add(productDto.getPrice().multiply(new BigDecimal(newQuantity-oldQuantity)));
+                        purchaseToEdit.setTotalPrice(newPrice);
+                    }
+                    purchaseRepository.save(purchaseToEdit);
+                    break;
+                }
+            }
+        }
+        return PurchaseDto.purchaseDaoToDtoMapper(purchaseToEdit, purchaseToEdit.getItems().stream().map(PurchaseItemDto::purchaseItemDaoToDtoMapper).toList());
+    }
+
+    public PurchaseDto removePurchaseItem (final Long purchaseId, final Long itemId) {
+        UserDetailsDto userDetails = JwtUtil.getCredentialsFromToken();
+        if (userDetails.getUserId() == null) {
+            throw new UnauthorizedException();
+        }
+
+        Purchase purchaseToEdit = purchaseRepository.findById(purchaseId).orElseThrow(
+                () -> new NotFoundException("Purchase with id: " + purchaseId + " could not be found")
+        );
+
+        if (!purchaseToEdit.getUserId().equals(userDetails.getUserId())) {
+            throw new UnauthorizedException();
+        }
+
+        if (LocalDateTime.now().isAfter(purchaseToEdit.getDeliveryDate())) {
+            throw new OperationNotAllowedException("The purchase has already been delivered, you can no longer edit it.");
+        }
+
+        List<PurchaseItem> newPurchaseItems = new ArrayList<>();
+        for (int i = 0; i < purchaseToEdit.getItems().size(); i++) {
+            if (purchaseToEdit.getItems().get(i).getId().equals(itemId)) {
+                purchaseToEdit.setTotalPrice(purchaseToEdit.getTotalPrice().subtract(purchaseToEdit.getItems().get(i).getPurchase_price().multiply(new BigDecimal(purchaseToEdit.getItems().get(i).getQuantity()))));
+            } else {
+                newPurchaseItems.add(purchaseToEdit.getItems().get(i));
+            }
+        }
+        purchaseToEdit.setItems(newPurchaseItems);
+        purchaseRepository.save(purchaseToEdit);
+        return PurchaseDto.purchaseDaoToDtoMapper(purchaseToEdit, purchaseToEdit.getItems().stream().map(PurchaseItemDto::purchaseItemDaoToDtoMapper).toList());
     }
 
     public void cancelPurchase (final long purchaseId) {

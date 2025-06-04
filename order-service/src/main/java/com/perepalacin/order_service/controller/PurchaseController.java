@@ -4,6 +4,7 @@ import com.perepalacin.order_service.entity.dto.PurchaseDto;
 import com.perepalacin.order_service.request.PurchaseRequest;
 import com.perepalacin.order_service.service.PurchaseService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,18 +29,33 @@ public class PurchaseController {
 
     @PostMapping("/checkout")
     public ResponseEntity<PurchaseDto> createPurchase (@RequestBody PurchaseRequest purchaseRequest) {
-        return ResponseEntity.ok(purchaseService.createPurchase(purchaseRequest));
+        return ResponseEntity.status(HttpStatus.CREATED).body(purchaseService.createPurchase(purchaseRequest));
     }
-//
-//    @PatchMapping("/{purchaseId}")
-//    public ResponseEntity<PurchaseDto> editPurchase (@PathVariable Long purchaseId) {
-//
-//    }
-//
+
+    @PatchMapping("/billing/{purchaseId}")
+    public ResponseEntity<PurchaseDto> editBillingAddressPurchase (@PathVariable Long purchaseId, @RequestParam Long billingAddressId) {
+        return ResponseEntity.status(HttpStatus.OK).body(purchaseService.editPurchaseAddress(purchaseId, billingAddressId, true));
+    }
+
+    @PatchMapping("/delivery/{purchaseId}")
+    public ResponseEntity<PurchaseDto> editDeliveryAddressPurchase (@PathVariable Long purchaseId, @RequestParam Long deliveryAddressId) {
+        return ResponseEntity.status(HttpStatus.OK).body(purchaseService.editPurchaseAddress(purchaseId, deliveryAddressId, false));
+    }
+
+    @PatchMapping("/item-quantity/{purchaseId}")
+    public ResponseEntity<PurchaseDto> editPurchaseItemQuantity (@PathVariable Long purchaseId, @RequestParam Long itemId, @RequestParam Integer newQuantity) {
+        return ResponseEntity.status(HttpStatus.OK).body(purchaseService.editPurchaseItemQuantity(purchaseId, itemId, newQuantity));
+    }
+
+    @PatchMapping("/remove-item/{purchaseId}")
+    public ResponseEntity<PurchaseDto> removePurchaseITem (@PathVariable Long purchaseId, @RequestParam Long itemId) {
+        return ResponseEntity.status(HttpStatus.OK).body(purchaseService.removePurchaseItem(purchaseId, itemId));
+    }
+
     @PatchMapping("/cancel/{purchaseId}")
     public ResponseEntity<Void> cancelPurchase (@PathVariable Long purchaseId) {
         purchaseService.cancelPurchase(purchaseId);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
 
 }

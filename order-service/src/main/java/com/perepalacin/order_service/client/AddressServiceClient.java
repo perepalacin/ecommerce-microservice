@@ -1,6 +1,7 @@
 package com.perepalacin.order_service.client;
 
 import com.perepalacin.order_service.entity.dto.AddressDto;
+import com.perepalacin.order_service.entity.dto.ProductDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -36,5 +37,11 @@ public class AddressServiceClient {
                 requestEntity,
                 responseType
         );
+    }
+
+    public ResponseEntity<AddressDto> getAddressById (final Long addressId) {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getForObject(addressServiceUrl + addressId, AddressDto.class);
+        return  ResponseEntity.ok().build();
     }
 }
