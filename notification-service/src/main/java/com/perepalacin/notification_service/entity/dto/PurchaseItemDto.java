@@ -1,21 +1,20 @@
 package com.perepalacin.notification_service.entity.dto;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Getter
 @Setter
-@Builder
-public class CartItemDto {
+@NoArgsConstructor
+public class PurchaseItemDto {
     private Long id;
+    private Integer quantity;
+    private BigDecimal purchase_price;
     private Long productId;
     private String name;
     private String publicUrl;
     private String imageUrl;
-    private BigDecimal price;
-    private int quantity;
-    private int stock;
 }

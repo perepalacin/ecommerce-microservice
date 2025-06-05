@@ -202,7 +202,8 @@ public class PurchaseService {
                         .items(purchaseItems)
                         .build();
 
-                 purchaseRepository.save(purchase);
+                cartServiceClient.deleteUserCart();
+                purchaseRepository.save(purchase);
 
 
                  return PurchaseDto.purchaseDaoToDtoMapper(purchase, this.mapCartItemsToPurchaseItems(purchase.getItems(), cartDto.getItems()));

@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -64,4 +65,22 @@ public class ProductController {
         List<Product> products = productService.findProductsByIds(productIds);
         return ResponseEntity.ok(products);
     }
+
+    @PostMapping("/admin")
+    public ResponseEntity<Product> createNewProduct(@RequestBody Product product) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(product));
+    }
+
+    @PatchMapping("/admin/{productId}")
+    public ResponseEntity<Product> updateProduct(@PathVariable Long productId, @RequestBody Product product) {
+        return ResponseEntity.status(HttpStatus.OK).body(productService.editProduct(product, productId));
+    }
+
+    @DeleteMapping("/admin/{productId}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long productId) {
+        productService.deleteProduct(productId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+    }
+
 }
+

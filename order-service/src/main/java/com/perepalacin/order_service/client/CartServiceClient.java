@@ -20,4 +20,10 @@ public class CartServiceClient {
         return  ResponseEntity.ok().build();
     }
 
+    public ResponseEntity<Void> deleteUserCart () {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.delete(cartServiceUrl + "all", void.class);
+        return  ResponseEntity.ok().build();
+    }
+
 }
