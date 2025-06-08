@@ -1,0 +1,45 @@
+---
+import MainLayout from "../../layout/MainLayout.astro";
+import type { Product } from "../../types/Product.ts";
+import type { APIPagebleResponse } from "../../types/APIPagebleResponse.ts";
+
+const API_URL = 'http://localhost:8090/api/v1/products';
+
+let products: Product[] = []; 
+
+try {
+  const response = await fetch(API_URL);
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+  } else {
+    const data: APIPagebleResponse<Product> = await response.json();
+    products = data.content;
+  }
+} catch (error) {
+  console.error("Failed to fetch items:", error);
+}
+---
+<MainLayout tabTitle="Home page!" activeTab="products">
+  <h1 class="mb-2">Explore Our Watches</h1>
+  {products && products.length > 0 ? ( 
+      
+      <div class="products-grid">
+      {products.map((item: Product) => ( 
+        <a class="w-100" href={"/products/" + item.publicUrl} target="_blank">
+          <div class="product-card">
+            <button class="icon-btn cart-button"><img src="./icons/cart.svg" width="16" height="16" loading="lazy"/></button>
+            <img src="./images/prx.png" loading="lazy"/>
+            <div class="w-100">
+                <h2>{item.name} <span>- {item.brand} - {item.mechanism}</span></h2>
+                <p>{item.description}</p>
+                <p class="price">{item.price} €</p>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  ) : (
+    <p>No items found or an error occurred while fetching items.</p>
+  )}
+</MainLayout>
