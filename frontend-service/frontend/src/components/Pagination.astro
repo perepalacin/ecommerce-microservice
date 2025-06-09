@@ -1,0 +1,29 @@
+---
+interface Props {
+  pages: number;
+  currentPage: number;
+  baseUrl: URL;
+}
+const { pages, currentPage, baseUrl } = Astro.props;
+
+const currentSearchParams = new URLSearchParams(baseUrl.searchParams);
+
+const getPageUrl = (pageNumber: number) => {
+  const newSearchParams = new URLSearchParams(currentSearchParams.toString()); 
+  newSearchParams.set('page', pageNumber.toString());
+  return `${baseUrl.pathname}?${newSearchParams.toString()}`;
+};
+
+---
+<div class="pagination">
+    {Array.from({ length: pages }, (_, i) => i).map((index) => 
+    {
+    return (
+            <a
+                href={getPageUrl(index + 1)}
+                aria-current={index === currentPage ? "page" : undefined}
+            >
+                <button class={index + 1 === currentPage ? "active-page" : ""}>{index+1}</button>
+            </a>
+    )})}
+</div>
