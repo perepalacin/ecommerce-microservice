@@ -125,6 +125,7 @@ input:focus {
     align-items: center;
     justify-content: center;
     padding: 0.65rem 1.5rem;
+    gap: 0.5rem;
     border: none;
     border-radius: 2rem;
     cursor: pointer;
@@ -145,6 +146,11 @@ input:focus {
     background-color: var(--main-color);
     color: var(--main-text-color);
 }
+.main-btn svg {
+    color: var(--main-text-color);
+    transition: background-color 300ms ease-out, color 300ms ease-out;
+}
+
 .main-btn:hover {
     background-color: var(--main-color-darken);
     color: var(--main-text-color-brighten);
@@ -170,6 +176,48 @@ input:focus {
     border: 1px solid var(--main-color-darken);
     color: var(--main-color-darken);
     transform: translateY(1px);
+}
+
+/* POPOVER */
+.pop-over {
+    position: absolute;
+    transform: translateY(0px) translateX(-40%);
+    opacity: 0; 
+    pointer-events: none;
+
+    z-index: 50;
+    padding: 1rem 1rem;
+    width: 300px;
+    border-radius: 1rem;
+    border: 1px solid var(--main-color);
+    background-color: var(--main-background-color);
+    box-shadow: 7px 7px 22px -6px rgba(0,0,0,0.53);
+    -webkit-box-shadow: 7px 7px 22px -6px rgba(0,0,0,0.53);
+    -moz-box-shadow: 7px 7px 22px -6px rgba(0,0,0,0.53);
+
+    transition:
+        opacity 150ms ease-out,
+        transform 150ms ease-out;
+}
+
+.pop-over.visible { 
+    transform: translateY(20px) translateX(-40%);
+    opacity: 1; 
+    pointer-events: all;
+}
+
+/* ADVANCED FILTERS */
+
+.filters-grid {
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: grid; 
+    grid-template-columns: 60% 40%;
+    gap: 2rem;
+    justify-content: space-evenly; 
+    align-content: start; 
+    justify-items: center; 
+    align-items: start; 
 }
 
 /* PRODUCTS GRID */
@@ -247,12 +295,12 @@ input:focus {
 
 /* SEARCH BAR */
 .product-search-bar {
-    margin-bottom: 1rem;
     width: 80%;
     border: 1px solid var(--main-color);
     color: var(--main-text-color);
     background-color: var(--main-background-color);
     border-radius: 2rem;
+    font-size: 1.05rem;
     padding: 1rem 2rem;
     font-weight: 600;
 }
@@ -260,6 +308,13 @@ input:focus {
 .product-search-bar::placeholder {
     color: var(--main-color);
     font-weight: 500;
+}
+.filters-button {
+    width: 20%;
+    border-radius: 2rem;
+    font-size: 1.05rem;
+    padding: 1rem 2rem;
+    font-weight: 600;
 }
 
 /* PAGINATION */

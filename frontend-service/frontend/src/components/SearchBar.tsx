@@ -13,7 +13,7 @@ export default function SearchBar({query, currentSearchParams, pathname}: Props)
   function handleUpdateUrl (newValue: string) {
     const newSearchParams = new URLSearchParams(currentSearchParams);
 
-    if (inputValue === null || inputValue === undefined || inputValue === '') {
+    if (newValue === null || newValue === undefined || newValue === '') {
       newSearchParams.delete("query");
     } else {
       newSearchParams.set("query", String(newValue));
@@ -57,16 +57,14 @@ export default function SearchBar({query, currentSearchParams, pathname}: Props)
   }, []);
 
   return (
-    <div class="search-bar-container">
-        <input
-          type="search"
-          name="query"
-          placeholder="Search products..."
-          value={inputValue}
-          onInput={handleChange} 
-          aria-label="Search products..."
-          class="product-search-bar"
-        />
-    </div>
+    <input
+      type="search"
+      name="query"
+      placeholder="Search products..."
+      value={inputValue}
+      onInput={handleChange} 
+      aria-label="Search products..."
+      class="product-search-bar"
+    />
   );
 }

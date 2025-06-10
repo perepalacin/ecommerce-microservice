@@ -4,7 +4,8 @@ import type { Product } from "../../types/Product.ts";
 import type { APIPagebleResponse } from "../../types/APIPagebleResponse.ts";
 import Pagination from "../../components/Pagination.astro";
 import SearchBar from "../../components/SearchBar";
-
+import AdvancedFiltersButton from "../../components/AdvancedFiltersButton.tsx";
+import AdvancedFilters from "../../components/AdvancedFilters.tsx";
 const incomingSearchParams = Astro.url.searchParams;
 const apiParams = new URLSearchParams();
 incomingSearchParams.forEach((value, key) => {
@@ -44,7 +45,11 @@ try {
 
 <MainLayout tabTitle="Home page!" activeTab="products">
   <h1 class="mb-2">Explore Our Watches</h1>
-  <SearchBar query={query} currentSearchParams={incomingSearchParams} pathname={Astro.url} client:load/>
+  <div class="flex-row mb-2 w-100 gap-1">
+    <SearchBar query={query} currentSearchParams={incomingSearchParams} pathname={Astro.url} client:load/>
+    <AdvancedFiltersButton client:load />
+  </div>
+  <AdvancedFilters client:load />
   {products && products.length > 0 ? ( 
       <div class="products-grid">
       {products.map((item: Product) => ( 
