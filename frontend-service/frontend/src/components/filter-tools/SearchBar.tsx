@@ -1,42 +1,25 @@
 import { useEffect, useState } from "preact/hooks";
+import { applyFilters, updateSearchParams } from "../../utils/update-search-params";
 
 interface Props {
-  query: string;
-  currentSearchParams: URLSearchParams;
   pathname: URL;
 }
 
-export default function SearchBar({query, currentSearchParams, pathname}: Props) {
-  const [inputValue, setInputValue] = useState(query || '');
+export default function SearchBar({pathname}: Props) {
+  const [inputValue, setInputValue] = useState(pathname.searchParams.get("query") || "");
   const [debounceTimeout, setDebounceTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
-
-  function handleUpdateUrl (newValue: string) {
-    const newSearchParams = new URLSearchParams(currentSearchParams);
-
-    if (newValue === null || newValue === undefined || newValue === '') {
-      newSearchParams.delete("query");
-    } else {
-      newSearchParams.set("query", String(newValue));
-      newSearchParams.set('page', '1');
-    }
-
-    const newUrl = `${pathname.origin}${pathname.pathname}?${newSearchParams.toString()}`;
-
-    if (window.location.href !== newUrl) {
-        window.location.href = newUrl;
-    }
-  }
 
   function handleChange (event: any) {
     const newValue = event.target.value;
     setInputValue(newValue);
+    updateSearchParams(pathname, "query", newValue);
 
     if (debounceTimeout) {
       clearTimeout(debounceTimeout);
     }
 
     const newTimeout = setTimeout(() => {
-      handleUpdateUrl(newValue);
+      applyFilters(pathname);
     }, 300); 
 
     setDebounceTimeout(newTimeout);
@@ -51,9 +34,7 @@ export default function SearchBar({query, currentSearchParams, pathname}: Props)
   }, [debounceTimeout]); 
 
   useEffect(() => {
-    if (inputValue !== '') {
-      handleUpdateUrl(inputValue);
-    }
+      updateSearchParams(pathname, "query", inputValue);
   }, []);
 
   return (

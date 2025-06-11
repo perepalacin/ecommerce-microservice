@@ -3,16 +3,14 @@ import MainLayout from "../../layout/MainLayout.astro";
 import type { Product } from "../../types/Product.ts";
 import type { APIPagebleResponse } from "../../types/APIPagebleResponse.ts";
 import Pagination from "../../components/Pagination.astro";
-import SearchBar from "../../components/SearchBar";
-import AdvancedFiltersButton from "../../components/AdvancedFiltersButton.tsx";
-import AdvancedFilters from "../../components/AdvancedFilters.tsx";
+import SearchBar from "../../components/filter-tools/SearchBar.tsx";
+import AdvancedFilters from "../../components/filter-tools/AdvancedFilters.tsx";
+import AdvancedFiltersButton from "../../components/filter-tools/AdvancedFiltersButton.tsx";
 const incomingSearchParams = Astro.url.searchParams;
 const apiParams = new URLSearchParams();
 incomingSearchParams.forEach((value, key) => {
     apiParams.append(key, value);
 });
-
-const query = incomingSearchParams.get('query') || '';
 
 const API_BASE_URL = 'http://localhost:8090/api/v1/products';
 const API_URL = `${API_BASE_URL}?${apiParams.toString()}`;
@@ -40,16 +38,15 @@ try {
   // redirect 500?
   console.error("Failed to fetch products:", error);
 }
-
 ---
 
-<MainLayout tabTitle="Home page!" activeTab="products">
+<MainLayout tabTitle="Our Watches" activeTab="products">
   <h1 class="mb-2">Explore Our Watches</h1>
-  <div class="flex-row mb-2 w-100 gap-1">
-    <SearchBar query={query} currentSearchParams={incomingSearchParams} pathname={Astro.url} client:load/>
+  <div class="flex-row mb-1 w-100 gap-1">
+    <SearchBar pathname={Astro.url} client:load/>
     <AdvancedFiltersButton client:load />
   </div>
-  <AdvancedFilters client:load />
+  <AdvancedFilters pathname={Astro.url} client:load />
   {products && products.length > 0 ? ( 
       <div class="products-grid">
       {products.map((item: Product) => ( 
@@ -67,7 +64,20 @@ try {
       ))}
     </div>
     <Pagination pages={totalPages} currentPage={currentPage} baseUrl={Astro.url}/>
-  ) : (
-    <p>No items found or an error occurred while fetching items.</p>
+  ) :  (
+    <div class="flex-col w-100 align-center">
+      <h2 class="mb-1">Ups...</h2>
+      <p>No items found were found for your current filters.</p>
+    </div>
   )}
 </MainLayout>
+
+
+<!-- const query = incomingSearchParams.get("query") || "";
+const mechansim = incomingSearchParams.get("query") || "";
+const currentSearchParams =  {
+  query: incomingSearchParams.get("query") || "",
+  mechansim: incomingSearchParams.get("query") || "",
+  maxPrice: incomingSearchParams.get("maxPrice") || Infinity,
+  minPrice: incomingSearchParams.get("minPrice") || 0,
+} -->
