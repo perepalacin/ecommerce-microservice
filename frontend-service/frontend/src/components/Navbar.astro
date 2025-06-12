@@ -1,5 +1,5 @@
 ---
-import AuthButtons from "./AuthButtons.astro";
+import { AuthButtons } from "./AuthButtons";
 
 const { activeTab } = Astro.props;
 ---
@@ -17,5 +17,5 @@ const { activeTab } = Astro.props;
     <a class={activeTab === "about" ? "active" : ""} href="/about">ABOUT</a>
     <a class={activeTab === "contact" ? "active" : ""} href="/contact">CONTACT US</a>
   </nav>
-  <AuthButtons/>
+  <AuthButtons isAuthenticated={Astro.cookies.has("authToken")} client:load />
 </div>

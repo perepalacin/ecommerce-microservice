@@ -1,0 +1,47 @@
+---
+import MainLayout from "../../../layout/MainLayout.astro";
+import LoginForm from "../../../components/LoginForm.tsx";
+
+export interface AuthAction {
+    action: string;
+    title: string;
+    desc: string;
+    extra: string;
+    redirect: string;
+    redirectTitle: string;
+}
+
+const AVAILABLE_ACTIONS: Record<string, AuthAction> = {
+    signup: {
+        action: "signup",
+        title: "Sign up",
+        desc: "Create an account for free!",
+        extra: "You already have an account?",
+        redirect: "/auth/signin",
+        redirectTitle: "Sign in"
+    },
+    signin: {
+        action: "signin",
+        title: "Sign in",
+        desc: "Log into your account to track your orders",
+        extra: "You don't have an account?",
+        redirect: "/auth/signup",
+        redirectTitle: "Sign up!"
+    }
+};
+
+const { action } = Astro.params;
+if (!action || !Object.keys(AVAILABLE_ACTIONS).includes(action)) {
+    return Astro.redirect("/404");
+}
+
+if (Astro.cookies.has("authToken")) {
+    return Astro.redirect("/products");
+}
+
+const pageContent: AuthAction = AVAILABLE_ACTIONS[action];
+---
+
+<MainLayout tabTitle={pageContent.title} activeTab="home">
+    <LoginForm pageContent={pageContent} client:load />
+</MainLayout>

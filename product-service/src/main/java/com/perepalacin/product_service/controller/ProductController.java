@@ -23,14 +23,15 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<Page<Product>> getProducts(
-            @RequestParam(required = false) String brand,
-            @RequestParam(required = false) String mechanism,
-            @RequestParam(required = false) Integer diameter,
+            @RequestParam(required = false) List<String> brands,
+            @RequestParam(required = false) List<String> mechanisms,
+            @RequestParam(required = false) Integer minDiameter,
+            @RequestParam(required = false) Integer maxDiameter,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "8") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort // e.g., "name,asc", "price,desc"
     ) {
         Sort sorting = Sort.by(sort[0].split(",")[0]);
@@ -40,10 +41,10 @@ public class ProductController {
             sorting = sorting.ascending();
         }
 
-        Pageable pageable = PageRequest.of(page, size, sorting);
+        Pageable pageable = PageRequest.of(page-1, size, sorting);
 
         Page<Product> products = productService.getFilteredProducts(
-                brand, mechanism, diameter, minPrice, maxPrice, keyword, pageable
+                brands, mechanisms, minDiameter, maxDiameter, minPrice, maxPrice, query, pageable
         );
         return ResponseEntity.ok(products);
     }

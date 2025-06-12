@@ -12,11 +12,11 @@ public class KeycloakTokenResponse {
     @JsonProperty("access_token")
     private String accessToken;
     @JsonProperty("expires_in")
-    private Long expiresIn;
+    private Integer expiresIn;
     @JsonProperty("refresh_token")
     private String refreshToken;
     @JsonProperty("refresh_expires_ins")
-    private Long refreshExpiresIn;
+    private Integer refreshExpiresIn;
     @JsonProperty("token_type")
     private String tokenType;
     @JsonProperty("session_state")

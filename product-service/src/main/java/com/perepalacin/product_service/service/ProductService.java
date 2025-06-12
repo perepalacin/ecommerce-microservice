@@ -31,9 +31,10 @@ public class ProductService {
     private final RestockServiceClient restockServiceClient;
 
     public Page<Product> getFilteredProducts(
-            String brand,
-            String mechanism,
-            Integer diameter,
+            List<String> brands,
+            List<String> mechanisms,
+            Integer minDiameter,
+            Integer maxDiameter,
             BigDecimal minPrice,
             BigDecimal maxPrice,
             String keyword,
@@ -41,14 +42,14 @@ public class ProductService {
 
         Specification<Product> spec = Specification.where(null);
 
-        if (brand != null && !brand.isEmpty()) {
-            spec = spec.and(ProductSpecification.hasBrand(brand));
+        if (brands != null && !brands.isEmpty()) {
+            spec = spec.and(ProductSpecification.hasAnyBrand(brands));
         }
-        if (mechanism != null && !mechanism.isEmpty()) {
-            spec = spec.and(ProductSpecification.hasMechanism(mechanism));
+        if (mechanisms != null && !mechanisms.isEmpty()) {
+            spec = spec.and(ProductSpecification.hasAnyMechanism(mechanisms));
         }
-        if (diameter != null) {
-            spec = spec.and(ProductSpecification.hasDiameter(diameter));
+        if (minDiameter != null || maxDiameter != null) {
+            spec = spec.and(ProductSpecification.diameterBetween(minDiameter, maxDiameter));
         }
         if (minPrice != null || maxPrice != null) {
             spec = spec.and(ProductSpecification.priceBetween(minPrice, maxPrice));
