@@ -1,7 +1,11 @@
 import { persistentAtom } from '@nanostores/persistent'
-import type { Product } from '../types/Product'
+import type { CartItem } from '../types/CartItem'
 
-export const cartStore = persistentAtom<Product[]>('cart:', [], {
+export const cartStore = persistentAtom<CartItem[]>('cart:', [], {
   encode: JSON.stringify,
   decode: JSON.parse,
 })
+
+export function removeCartItem () {
+
+}

@@ -1,50 +1,47 @@
-import { authStore } from "../stores/authStore";
+import { useState } from "preact/hooks";
 import { cartStore } from "../stores/cartStore";
+import { apiDeleteRequest, apiPostRequest } from "../utils/api-request";
+import type { CartItem } from "../types/CartItem";
 
 interface Props {
     productId: number;
+    stock: number;
 }
 
-export default function AddToCartButton ({productId}: Props) {
+export default function AddToCartButton ({productId, stock}: Props) {
 
-    const isProductInCart = cartStore.get().find((prod) => prod.id === productId);
+    const [productFromCart, setProductFromCart] = useState<CartItem | undefined>(cartStore.get().find((prod) => prod.productId === productId));
     
-    async function handleClick (e: any) {
-        e.preventDefault();
+    async function handleClick(e: any) {
         e.stopPropagation();
-        if (authStore.get().authenticated) {
+        if (!productFromCart) {
             try {
-                const response = await fetch("http://localhost:8090/api/v1/carts?productId=" + productId, {
-                    method: "POST",
-                    headers: {
-                    'Authorization': `Bearer ${authStore.get().accessToken}`,
-                    'Content-Type': 'application/json'
-                    }
-                });
-                if (response.status === 401) {
-                    
-                }
-                if (!response.ok) {
-                    throw new Error(`Response status: ${response.status}`);
-                }
-                const json = await response.json();
-                console.log(json);
-                // cartStore.set([...cartStore.get()])
-
+                const url = `/api/v1/carts?productId=${productId}`;
+                
+                const jsonResponse = await apiPostRequest(url, {});
+                
+                cartStore.set([...jsonResponse.items]);
+                setProductFromCart(jsonResponse.items.find((prod: CartItem) => prod.productId === productId));
+                
             } catch (error) {
-                console.error(error);
+                console.error("Error adding this this item to the cart:", error);
             }
         } else {
-            window.location.replace("/signin");
+            try {
+                const url = `/api/v1/carts?cartItemId=${productFromCart.id}`;
+                const jsonResponse = await apiDeleteRequest(url);
+                cartStore.set([...cartStore.get().filter((items) => items.id !== productFromCart.id)]);
+                setProductFromCart(undefined);
+            } catch (error) {
+                console.error("Error removing the item form the cart:", error);
+            }
         }
-         
     }
 
-
     return (
-        <button class="btn main-btn text-bold" onClick={handleClick}>
+        <button class="btn main-btn text-bold" onClick={handleClick} disabled={stock <= 0 && !productFromCart}>
             {
-                isProductInCart 
+                productFromCart 
                 ?
                 <>
                 <img src="/icons/x.svg" width="16" height="16" loading="lazy"/>

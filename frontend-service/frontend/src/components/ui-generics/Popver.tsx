@@ -11,6 +11,8 @@ interface PopoverProps {
   closeOnEscape?: boolean;
   triggerOn?: 'click' | 'hover';
   hoverDelay?: number;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const Popover = ({
@@ -23,8 +25,20 @@ const Popover = ({
   closeOnEscape = true,
   triggerOn = 'click',
   hoverDelay = 200,
+  isOpen: controlledIsOpen,
+  onOpenChange,
 }: PopoverProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isCurrentlyOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+  
+  const setOpen = (newOpenState: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(newOpenState);
+    } else {
+      setInternalIsOpen(newOpenState);
+    }
+  };
+  
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -100,7 +114,7 @@ const Popover = ({
   const handleTriggerClick = (e: Event) => {
     if (triggerOn === 'click') {
       e.stopPropagation();
-      setIsOpen(!isOpen);
+      setOpen(!isCurrentlyOpen); // Use the new setOpen function
     }
   };
 
@@ -108,7 +122,7 @@ const Popover = ({
     if (triggerOn === 'hover') {
       clearHoverTimeout();
       hoverTimeoutRef.current = setTimeout(() => {
-        setIsOpen(true);
+        setOpen(true);
       }, hoverDelay);
     }
   };
@@ -117,7 +131,7 @@ const Popover = ({
     if (triggerOn === 'hover') {
       clearHoverTimeout();
       hoverTimeoutRef.current = setTimeout(() => {
-        setIsOpen(false);
+        setOpen(false);
       }, hoverDelay);
     }
   };
@@ -132,7 +146,7 @@ const Popover = ({
     if (triggerOn === 'hover') {
       clearHoverTimeout();
       hoverTimeoutRef.current = setTimeout(() => {
-        setIsOpen(false);
+        setOpen(false);
       }, hoverDelay);
     }
   };
@@ -146,18 +160,18 @@ const Popover = ({
       !popoverRef.current.contains(e.target as Node) &&
       !triggerRef.current.contains(e.target as Node)
     ) {
-      setIsOpen(false);
+      setOpen(false);
     }
   };
 
   const handleEscape = (e: KeyboardEvent) => {
     if (closeOnEscape && e.key === 'Escape') {
-      setIsOpen(false);
+      setOpen(false);
     }
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isCurrentlyOpen) {
       calculatePosition();
       
       const handleReposition = () => calculatePosition();
@@ -169,10 +183,10 @@ const Popover = ({
         window.removeEventListener('resize', handleReposition);
       };
     }
-  }, [isOpen, placement, offset]);
+  }, [isCurrentlyOpen, placement, offset]);
 
   useEffect(() => {
-    if (triggerOn === 'click' && isOpen) {
+    if (triggerOn === 'click' && isCurrentlyOpen) {
       document.addEventListener('click', handleClickOutside);
       document.addEventListener('keydown', handleEscape);
       
@@ -181,7 +195,7 @@ const Popover = ({
         document.removeEventListener('keydown', handleEscape);
       };
     }
-  }, [isOpen, closeOnClickOutside, closeOnEscape, triggerOn]);
+  }, [isCurrentlyOpen, closeOnClickOutside, closeOnEscape, triggerOn]);
 
   useEffect(() => {
     return () => {
@@ -218,7 +232,7 @@ const Popover = ({
   return (
     <>
       {triggerElement}
-      {isOpen && (
+      {isCurrentlyOpen && (
         <div
           ref={popoverRef}
           className={`popover ${className}`}
@@ -232,7 +246,7 @@ const Popover = ({
           onMouseEnter={handlePopoverMouseEnter}
           onMouseLeave={handlePopoverMouseLeave}
         >
-          <div className="popover-content px-1 py-1">
+          <div className="popover-content">
             {children}
           </div>
         </div>

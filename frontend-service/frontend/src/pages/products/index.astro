@@ -6,6 +6,7 @@ import Pagination from "../../components/Pagination.astro";
 import SearchBar from "../../components/filter-tools/SearchBar.tsx";
 import AdvancedFilters from "../../components/filter-tools/AdvancedFilters.tsx";
 import AdvancedFiltersButton from "../../components/filter-tools/AdvancedFiltersButton.tsx";
+import { priceFormatter } from "../../utils/formatters";
 const incomingSearchParams = Astro.url.searchParams;
 const apiParams = new URLSearchParams();
 incomingSearchParams.forEach((value, key) => {
@@ -50,14 +51,14 @@ try {
   {products && products.length > 0 ? ( 
       <div class="products-grid">
       {products.map((item: Product) => ( 
-        <a class="w-100" href={"/products/" + item.publicUrl} target="_blank">
+        <a class="w-100" href={"/products/" + item.publicUrl} aria-label="Product page">
           <div class="product-card">
             <button class="icon-btn cart-button"><img src="/icons/cart.svg" width="16" height="16" loading="lazy"/></button>
-            <img src="/images/prx.png" loading="lazy"/>
+            <img src="/images/prx.png" loading="lazy" class={item.stock <= 0 ? "disabled-image" : ""}/>
             <div class="w-100">
                 <h2>{item.name} <span>- {item.brand} - {item.mechanism}</span></h2>
                 <p>{item.description}</p>
-                <p class="price">{item.price.toFixed(2)} €</p>
+                <p class="price">{priceFormatter(item.price)} €</p>
             </div>
           </div>
         </a>

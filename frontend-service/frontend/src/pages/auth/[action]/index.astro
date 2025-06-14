@@ -35,7 +35,7 @@ if (!action || !Object.keys(AVAILABLE_ACTIONS).includes(action)) {
     return Astro.redirect("/404");
 }
 
-if (Astro.cookies.has("authToken")) {
+if (Astro.cookies.has("authToken") || Astro.cookies.has("refreshToken")) {
     return Astro.redirect("/products");
 }
 

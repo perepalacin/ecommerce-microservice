@@ -1,0 +1,9 @@
+---
+import MainLayout from "../../layout/MainLayout.astro";
+import { CheckoutCartFrom } from "../../components/CheckoutCartForm.tsx";
+import { Suspense } from "preact/compat";
+
+---
+<MainLayout tabTitle="Checkout page" activeTab="products">
+    <CheckoutCartFrom client:load />
+</MainLayout>

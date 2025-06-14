@@ -1,9 +1,9 @@
-import { authStore } from "../stores/authStore";
+export let isRefreshingPromise: Promise<Response> | null = null;
+const failedRequestSubscribers: Array<(accessToken: string) => void> = [];
 
-export async function handleLoginUser(request: FormData): Promise<string> {
-
+export async function handleLoginUser(request: FormData): Promise<{result: "SUCCESS" | "ERROR"; message: string }> {
     if (!request.get("email") || !request.get("password")) {
-        return "Email or password is missing";
+        return {result: "ERROR", message: "Email or password is missing"};
     }
 
     try {
@@ -19,40 +19,81 @@ export async function handleLoginUser(request: FormData): Promise<string> {
         })
       });
       if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
+        console.log(response);
+        const message = await response.text();
+        throw new Error(`${message}`);
       }
-      window.location.replace("/products");
-      return "Login Successfully";
+      return {result: "SUCCESS", message: "User logged successfully"};
     } catch (error: any) {
-      console.error(error.message);
-      return "There was an error while logging in, please try again later.";
+      return {result: "ERROR", message: error.message};
     }
   }
 
-  export async function handleRequestRefreshToken(): Promise<void> {
+  export async function handleRegisterUser(request: FormData): Promise<{result: "SUCCESS" | "ERROR"; message: string }> {
+    if (!request.get("email") || !request.get("password") || !request.get("firstName") || !request.get("lastName")) {
+        return {result: "ERROR", message: "Please, fill all the fields in the form"};
+    }
 
     try {
-      const response = await fetch("http://localhost:8090/api/v1/auth/refresh-token/" + authStore.get().refreshToken, {
+      const response = await fetch("http://localhost:8090/api/v1/auth/sign-up", {
         method: "POST",
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ 
+          firstName: request.get("firstName"),
+          lastName: request.get("lastName"),
+          email: request.get("email"),
+          password: request.get("password")
+        })
       });
       if (!response.ok) {
-        window.location.replace("/signin");
-        return;
+        console.log(response);
+        const message = await response.text();
+        throw new Error(`${message}`);
       }
-      const json = await response.json();
-
-      authStore.setKey('accessToken', json.access_token);
-      authStore.setKey('expiresIn', json.expires_in);
-      authStore.setKey('refreshExpiresIn', json.refresh_expires_in);
-      authStore.setKey('refreshToken', json.refresh_token);
-      authStore.setKey('authenticated', true);
-      return;
+      return {result: "SUCCESS", message: "User registered successfully"};
     } catch (error: any) {
-      console.error(error.message);
-      window.location.replace("/signin");
-      return;
+      return {result: "ERROR", message: error.message};
     }
   }
+
+export async function handleRequestRefreshToken(): Promise<void> {
+  if (isRefreshingPromise) {
+      await isRefreshingPromise;
+      return;
+  }
+
+  try {
+      const headers: HeadersInit = {};
+
+      isRefreshingPromise = fetch('http://localhost:8090/api/v1/auth/refresh-token', {
+          method: 'POST',
+          headers: headers,
+          credentials: 'include', 
+      });
+
+      const response = await isRefreshingPromise;
+
+      if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Refresh token request failed:", response.status, errorText);
+          
+          if (typeof window !== "undefined") {
+              window.location.replace("/auth/signin");
+          }
+          throw new Error(`Refresh token failed: ${response.status} ${errorText}`);
+      }
+
+      console.log("Token refreshed successfully.");
+
+  } catch (error: any) {
+      console.error("Error during token refresh:", error.message);
+      if (typeof window !== "undefined") {
+          window.location.replace("/auth/signin");
+      }
+      throw error; 
+  } finally {
+      isRefreshingPromise = null;
+  }
+}

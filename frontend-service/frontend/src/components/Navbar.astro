@@ -6,16 +6,16 @@ const { activeTab } = Astro.props;
 <div class="nav-bar">
   <h1>
     <img src="/icons/watch.svg" width="30" height="30" loading="lazy" class="align-center"/>
-    <a href="/">
+    <a href="/" aria-label="Home page">
       ON
       TIME
     </a>
   </h1>
   <nav>
-    <a class={activeTab === "home" ? "active" : ""} href="/">HOME</a>
-    <a class={activeTab === "products" ? "active" : ""} href="/products">PRODUCTS</a>
-    <a class={activeTab === "about" ? "active" : ""} href="/about">ABOUT</a>
-    <a class={activeTab === "contact" ? "active" : ""} href="/contact">CONTACT US</a>
+    <a class={activeTab === "home" ? "active" : ""} href="/" aria-label="Home page">HOME</a>
+    <a class={activeTab === "products" ? "active" : ""} href="/products" aria-label="Products page">PRODUCTS</a>
+    <a class={activeTab === "about" ? "active" : ""} href="/about" aria-label="About page">ABOUT</a>
+    <a class={activeTab === "contact" ? "active" : ""} href="/contact" aria-label="Fake contact page">CONTACT US</a>
   </nav>
-  <AuthButtons isAuthenticated={Astro.cookies.has("authToken")} client:load />
+  <AuthButtons isAuthenticated={Astro.cookies.has("authToken") || Astro.cookies.has("refreshToken")} client:load />
 </div>

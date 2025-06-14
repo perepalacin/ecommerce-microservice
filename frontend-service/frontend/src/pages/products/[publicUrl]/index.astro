@@ -2,6 +2,7 @@
 import AddToCartButton from "../../../components/AddToCartButton";
 import MainLayout from "../../../layout/MainLayout.astro";
 import type { Product } from "../../../types/Product";
+import { priceFormatter } from "../../../utils/formatters";
 
 const { publicUrl } = Astro.params;
 const API_URL = 'http://localhost:8090/api/v1/products/url/' + publicUrl;
@@ -32,8 +33,8 @@ try {
 
 ---
 <MainLayout tabTitle={product.brand + " - " + product.name} activeTab="products">
-    <div class="flex-row w-50">
-      <div class="product-card w-50">
+    <div class="product-page">
+      <div class="product-card">
         <img src="/images/prx.png" loading="lazy"/>
       </div>
       <div class="product-info">
@@ -44,8 +45,8 @@ try {
           <li>Mechanism: <span>{product.mechanism}</span></li>
         </ul>
         {product.stock > 0 && <p>Item <span>in stock</span></p>}
-        <h2>{product.price} €</h2>
-        <AddToCartButton productId={product.id} client:load/>
+        {product.stock > 0 && <h2>{priceFormatter(product.price)} €</h2>}
+        <AddToCartButton productId={product.id} stock={product.stock} client:load/>
       </div>
     </div>
 </MainLayout>

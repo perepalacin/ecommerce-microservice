@@ -55,11 +55,21 @@ export function deleteAllFilters () {
   searchParams.set({});
 }
 
-export function applyFilters (pathname: URL) {
-  const newSearchParams = new URLSearchParams(searchParams.get());
-  const newUrl = `${pathname.origin}${pathname.pathname}?${newSearchParams.toString()}`;
 
-  if (window.location.href + "?" !== newUrl) {
-      window.location.href = newUrl;
+export function applyFilters(pathname: URL) {
+  const currentSearchParams = new URLSearchParams(searchParams.get()); // Create a mutable copy
+
+  const filteredSearchParams = new URLSearchParams();
+
+  for (const [key, value] of currentSearchParams.entries()) {
+    if (value.trim() !== '') {
+      filteredSearchParams.append(key, value);
+    }
+  }
+
+  const queryString = filteredSearchParams.toString();
+  const newUrl = `${pathname.origin}${pathname.pathname}${queryString ? '?' + queryString : ''}`;
+  if (window.location.href !== newUrl) {
+    window.location.href = newUrl;
   }
 }
