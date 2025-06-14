@@ -1,5 +1,6 @@
 package com.perepalacin.cart_service.config;
 
+import com.perepalacin.cart_service.util.CookieBearerTokenResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -40,10 +42,16 @@ public class SecurityConfig {
                                 .anyRequest()
                                 .authenticated())
                 .oauth2ResourceServer(oauth -> {
+                    oauth.bearerTokenResolver(cookieBearerTokenResolver());
                     oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter));
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .build();
+    }
+
+    @Bean
+    public BearerTokenResolver cookieBearerTokenResolver() {
+        return new CookieBearerTokenResolver();
     }
 
     @Bean

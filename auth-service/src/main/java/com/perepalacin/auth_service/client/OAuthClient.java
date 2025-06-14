@@ -6,13 +6,12 @@ import com.perepalacin.auth_service.response.KeycloakTokenResponse;
 import com.perepalacin.auth_service.entity.dto.UserDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -41,15 +40,23 @@ public class OAuthClient {
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formParams, headers);
-
-        ResponseEntity<KeycloakTokenResponse> responseEntity = restTemplate.postForEntity(oauthServiceUrl, request, KeycloakTokenResponse.class);
-
-        if (responseEntity.getStatusCode().is2xxSuccessful()) {
-            log.info("User authenticated successfully: " + responseEntity.getBody());
-            return responseEntity.getBody();
-        } else {
-            log.error("Failed to authenticate the user: {}", responseEntity.getStatusCode());
-            throw new RuntimeException("Authentication failed status: " + responseEntity.getStatusCode());
+        try {
+            ResponseEntity<KeycloakTokenResponse> responseEntity = restTemplate.postForEntity(oauthServiceUrl, request, KeycloakTokenResponse.class);
+            if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                log.info("User authenticated successfully: " + responseEntity.getBody());
+                return responseEntity.getBody();
+            } else {
+                log.error("Failed to authenticate the user: {}", responseEntity.getStatusCode());
+                throw new RuntimeException("Authentication failed status: " + responseEntity.getStatusCode());
+            }
+        } catch (HttpClientErrorException e) {
+            log.debug(e.getClass().getName() + " - " + e.getStatusCode());
+            if (e.getStatusCode().equals(HttpStatus.UNAUTHORIZED)) {
+                throw new BadCredentialsException("The username or password provided are incorrect");
+            } else {
+                log.error("Failed to authenticate the user: " + e.toString());
+                throw new RuntimeException("The login service is not available, please try again later");
+            }
         }
     }
 

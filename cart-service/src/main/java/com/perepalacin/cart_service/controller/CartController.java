@@ -32,12 +32,14 @@ public class CartController {
     }
 
     @PostMapping
-    public ResponseEntity<CartDto> addItemToTheCart (@RequestParam (name = "productId") Long productId, @RequestParam (name="quantity") Integer quantity) {
+    public ResponseEntity<CartDto> addItemToTheCart (@RequestParam (name = "productId") Long productId, @RequestParam (name="quantity", required = false) Integer quantity) {
+        if (quantity == null) {
+            quantity = 1;
+        }
         cartService.addItemToCart(productId, quantity);
         return ResponseEntity.status(HttpStatus.OK).body(cartService.getUserCart());
     }
 
-    //This should be debounced on the FE
     @PatchMapping("/quantity")
     public ResponseEntity<CartItemDto> changeItemQuantity (@RequestParam (name = "cartItemId") Long cartItemId, @RequestParam (name="quantity") Integer quantity) {
         return ResponseEntity.status(HttpStatus.OK).body(cartService.editCartItemQuantity(cartItemId, quantity));

@@ -24,7 +24,7 @@ public class AddressController {
         return ResponseEntity.ok(addressesService.getAddressesById(addressId));
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<AddressDao>> getUserAddresses () {
         return ResponseEntity.ok(addressesService.getUserAddresses());
     }

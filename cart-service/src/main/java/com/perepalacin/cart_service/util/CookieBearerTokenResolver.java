@@ -1,4 +1,4 @@
-package com.perepalacin.apigateway.config;
+package com.perepalacin.cart_service.util;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

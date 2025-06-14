@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 
 import static com.perepalacin.auth_service.util.CookiesUtil.addHttpOnlyCookie;
@@ -24,14 +25,15 @@ public class AuthController {
 
     private final KeycloakService keycloakService;
     private final OAuthClient oAuthClient;
-    final int defaultRefreshMaxAge = 60 * 60 * 24 * 14; // 14 days
+    final int defaultRefreshMaxAge = Integer.MAX_VALUE;
+//    final int defaultRefreshMaxAge = 60 * 60 * 24 * 14; // 14 days
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
         return ResponseEntity.ok("pong!");
     }
 
     @PostMapping("/sign-in")
-    public ResponseEntity<?> loginUser(@Valid @RequestBody UserDto userDto, HttpServletResponse response) {
+    public ResponseEntity<String> loginUser(@Valid @RequestBody UserDto userDto, HttpServletResponse response) {
         try {
             KeycloakTokenResponse token = oAuthClient.authenticateUser(userDto);
             String accessToken = token.getAccessToken();
@@ -50,8 +52,9 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/refresh-token/{refreshToken}")
-    public ResponseEntity<?> getNewAccessToken(@PathVariable(name="refreshToken") String refreshToken, HttpServletRequest request, HttpServletResponse response) {
+    @PostMapping("/refresh-token")
+    public ResponseEntity<String> getNewAccessToken(HttpServletRequest request, HttpServletResponse response) {
+        //TODO: Should remove cookies and redirect to sign-in if it fails!
         String existingRefreshToken = null;
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
@@ -67,7 +70,7 @@ public class AuthController {
         }
 
         try {
-            KeycloakTokenResponse token = oAuthClient.refreshAccessToken(refreshToken);
+            KeycloakTokenResponse token = oAuthClient.refreshAccessToken(existingRefreshToken);
             String newAccessToken = token.getAccessToken();
             String newRefreshToken = token.getRefreshToken();
             Integer newExpiresIn = token.getExpiresIn();
@@ -81,7 +84,25 @@ public class AuthController {
 
         } catch (Exception e) {
             System.err.println("Refresh token error: " + e.getMessage());
-            return ResponseEntity.status(500).body("Token refresh failed: " + e.getMessage());
+            Cookie authTokenCookie = new Cookie("authToken", null);
+            authTokenCookie.setHttpOnly(true);
+            authTokenCookie.setPath("/");
+            authTokenCookie.setMaxAge(0);
+            response.addCookie(authTokenCookie);
+            Cookie refreshTokenCookie = new Cookie("refreshToken", null);
+            refreshTokenCookie.setHttpOnly(true);
+            refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setMaxAge(0);
+            response.addCookie(refreshTokenCookie);
+            try {
+                return ResponseEntity.status(HttpStatus.SEE_OTHER)
+                        .location(new URI("/auth/login"))
+                        .build();
+            } catch (URISyntaxException uriEx) {
+                System.err.println("Error creating redirect URI for /auth/login: " + uriEx.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Token refresh failed and could not redirect: " + e.getMessage());
+            }
         }
     }
 
@@ -91,6 +112,20 @@ public class AuthController {
         return response;
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logoutUser(HttpServletResponse response) {
+        Cookie authTokenCookie = new Cookie("authToken", null);
+        authTokenCookie.setHttpOnly(true);
+        authTokenCookie.setPath("/");
+        authTokenCookie.setMaxAge(0);
+        response.addCookie(authTokenCookie);
+        Cookie refreshTokenCookie = new Cookie("refreshToken", null);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(0);
+        response.addCookie(refreshTokenCookie);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+    }
 
     @PutMapping("/update/{userId}")
     public ResponseEntity<String> updateUser(@PathVariable String userId, @RequestBody UserDto userDTO){

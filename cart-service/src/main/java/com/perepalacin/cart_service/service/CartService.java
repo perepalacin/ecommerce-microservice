@@ -162,8 +162,6 @@ public class CartService {
 
         ResponseEntity<List<ProductDto>> productResponse = productServiceClient.getListOfProductsById(productIds);
 
-        log.debug(productResponse.getStatusCode().toString());
-        log.info(String.valueOf(productResponse.getBody().size()));
         if (productResponse.getStatusCode().is2xxSuccessful() && productResponse.getBody() != null) {
             List<CartItemDto> cartItems = new ArrayList<>();
             productResponse.getBody().forEach(product -> {
@@ -181,6 +179,7 @@ public class CartService {
                         .quantity(foundItem.get().getQuantity())
                         .productId(product.getId())
                         .name(product.getName())
+                        .brand(product.getBrand())
                         .price(product.getPrice())
                         .stock(product.getStock())
                         .publicUrl(product.getPublicUrl())

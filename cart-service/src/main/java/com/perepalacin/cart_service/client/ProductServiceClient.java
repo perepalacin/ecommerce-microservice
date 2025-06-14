@@ -19,9 +19,8 @@ public class ProductServiceClient {
 
     public ResponseEntity<ProductDto> getProductById(final Long productId) {
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.getForObject(productServiceUrl + "/id/" + productId, ProductDto.class);
-
-        return  ResponseEntity.ok().build();
+        ProductDto productDto = restTemplate.getForObject(productServiceUrl + "/id/" + productId, ProductDto.class);
+        return ResponseEntity.ok(productDto);
     }
 
     public ResponseEntity<List<ProductDto>> getListOfProductsById(final List<Long> productIds) {
