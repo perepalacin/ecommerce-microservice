@@ -1,28 +1,7 @@
 ---
 import MainLayout from "../../layout/MainLayout.astro";
-import { apiGetRequest } from "../../utils/api-request";
-
-const cookiesHeader = Astro.request.headers.get('cookie');
-
-try {
-    const response = await apiGetRequest("/api/v1/addresses/all", cookiesHeader ? cookiesHeader : undefined);
-    
-    if (!response.ok) {
-        const errorBody = await response.text();
-        console.error("API Response Error:", errorBody); 
-        throw new Error("Response failed with status: " + response.status + " " + errorBody);
-    } else {
-        const data: any = await response.json();
-        if (!data) {
-            throw new Error("Response failed with status: " + response.status + " no data was found.");
-        }
-        console.log(data);
-    }
-} catch (error) {
-    console.error("Failed to fetch items:", error);
-    // return Astro.redirect("/500");
-}
+import { AddressSelectionForm } from "../../components/AddressSelectionForm.tsx";
 ---
-<MainLayout tabTitle="Your addresses" activeTab="products">
-    
+<MainLayout tabTitle="Select addresses" activeTab="products">
+  <AddressSelectionForm client:load />
 </MainLayout>

@@ -1,0 +1,9 @@
+---
+import MainLayout from "../../../../layout/MainLayout.astro";
+import { AddressCreateForm } from "../../../../components/AddressCreateForm.tsx";
+const { addressId } = Astro.params;
+
+---
+<MainLayout tabTitle="Add address" activeTab="products">
+  <AddressCreateForm addressId={addressId ? Number(addressId) : undefined} client:load />
+</MainLayout>

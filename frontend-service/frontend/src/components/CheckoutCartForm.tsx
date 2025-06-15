@@ -10,6 +10,11 @@ export function CheckoutCartFrom () {
     const [cartItems, setCartItems] = useState<CartItem[]>(cartStore.get() || []);
     const debounceTimeoutRef = useRef<number | null>(null);
 
+    let isCheckoutPage = false;
+    if (typeof window !== "undefined"){
+        isCheckoutPage = window.location.pathname === "/checkout";
+    }
+
     async function handleRemoveCartItem (cartItemId: number) {
         try {
             const url = `/api/v1/carts?cartItemId=${cartItemId}`;
@@ -83,6 +88,7 @@ export function CheckoutCartFrom () {
     return (
         <Suspense fallback={<p>Loading checkout form...</p>}>
         <>
+            {isCheckoutPage && <h1>Review the items in your cart:</h1>}
             <ul class="dropdown w-75">
                 {cartItems.map((item) =>
                     <li class="cart-item">
@@ -107,8 +113,8 @@ export function CheckoutCartFrom () {
                         Clear items
                         {/* //TODO: disabled button colors!? */}
                 </button>
-                <a href="/checkout" aria-label="Checkout page">
-                    <button class="btn main-btn" disabled={cartItems.find((item) => item.quantity > item.stock) ? true : false}>
+                <a href="/addresses" aria-label="Checkout page">
+                    <button class="btn main-btn" disabled={cartItems.length === 0 || cartItems.find((item) => item.quantity > item.stock) ? true : false}>
                         Continue
                     </button>
                 </a>

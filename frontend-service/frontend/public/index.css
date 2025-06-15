@@ -108,6 +108,13 @@ ul {
 .w-35 {
     width: 35% !important;
 }
+.w-25 {
+    width: 25% !important;
+}
+.w-10 {
+    width: 10% !important;
+}
+
 .flex-row {
     display: flex;
     flex-direction: row;
@@ -245,6 +252,11 @@ ul {
     border-radius: 2rem;
     cursor: pointer;
     transition: background-color 300ms ease-out, color 300ms ease-out;
+}
+
+button:disabled {
+    filter: grayscale(100%);
+    /* opacity: 50%; */
 }
 
 .icon-btn {

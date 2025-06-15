@@ -21,7 +21,6 @@ async function apiFetchWrapper<T = any>(
           credentials: 'include' 
       };
 
-      console.log(updatedConfig);
       const response = await fetch(fullUrl, updatedConfig);
       if (response.status === 401) {
           if (retries < maxRetries) {
@@ -51,7 +50,6 @@ async function apiFetchWrapper<T = any>(
       }
 
       try {
-        console.log("HERE!!!!!!!!HERE!!!!!!!!HERE!!!!!!!!HERE!!!!!!!!HERE!!!!!!!!");
           const contentType = response.headers.get('content-type');
           if (contentType && contentType.includes('application/json')) {
               return await response.json() as T;
