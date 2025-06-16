@@ -23,5 +23,15 @@ public class AuthServiceRoute {
                             URI.create("forward:/authFallback")))
                     .build();
     }
+
+    @Bean
+    public RouterFunction<ServerResponse> addressServiceRoutes() {
+        return GatewayRouterFunctions.route("address-service")
+                .route(RequestPredicates.path("/api/v1/addresses/**"),
+                        HandlerFunctions.http("http://localhost:8082"))
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("addressServiceCircuitBreaker",
+                        URI.create("forward:/addressFallback")))
+                .build();
+    }
 }
 

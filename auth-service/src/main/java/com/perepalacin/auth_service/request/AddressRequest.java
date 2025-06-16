@@ -14,7 +14,7 @@ public class AddressRequest {
     @NotNull(message = "Full name is required")
     private String fullName;
     @NotNull(message = "Telephone number is required")
-    private short telephoneNumber;
+    private String telephoneNumber;
     @NotNull(message = "Address first line is required")
     private String addressFirstLine;
     @NotNull(message = "Address second line is required")

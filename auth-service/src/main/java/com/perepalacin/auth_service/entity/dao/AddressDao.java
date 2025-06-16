@@ -1,16 +1,14 @@
 package com.perepalacin.auth_service.entity.dao;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.UUID;
 
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @Entity
 @Table(name="addresses")
@@ -21,12 +19,12 @@ public class AddressDao {
     @Column(name="full_name")
     private String fullName;
     @Column(name="telephone_number")
-    private short telephoneNumber;
+    private String telephoneNumber;
     @Column(name="address_first_line")
     private String addressFirstLine;
     @Column(name="address_second_line")
     private String addressSecondLine;
-    @Column(name="postalCode")
+    @Column(name = "postal_code")
     private String postalCode;
     @Column(name="city")
     private String city;
